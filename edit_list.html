@@ -1,0 +1,305 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+	<title>HIRO - Black / White  List Manager</title>
+    
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" />
+    <link rel="shortcut icon" href="css/hirofavicon.ico" />
+    
+    
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    
+    <script src="js/chosen.jquery.min.js"></script>
+    <link rel="stylesheet" href="css/chosen.min.css" />
+    
+    
+    <script>
+    $(document).ready(function() {
+
+        var list_id = getQueryVariable("list_id");
+        
+         
+         $.ajax({
+                   url: 'http://bwlistsmanager.appspot.com/lists/'+list_id,
+                   type: 'GET',
+                   dataType: "json",
+                   crossDomain: true,
+                   xhrFields: {
+                        withCredentials: true
+                    },
+                   success: function(data) {
+                       $('#list_name').val(data.data.listName);
+                       $('#list_comments').val(data.data.comments);
+                       
+                       
+                       $('#list_title').html(data.data.listName);
+                       $('#list_id_num').html(list_id);
+                       $('#list_type').html(data.data.listType);
+                       var match = data.data.mediaSellers.split(',')
+                       setTimeout(function() { makeselected(match); }, 1100);
+                       
+                   },
+                   error: function() {
+                    
+                       $('.bs-example-modal-sm').modal('show');
+                   }
+                });
+         
+      
+        
+
+        $('#edit_list').on('submit', function(e) { 
+            $("#edit_list").unbind("submit");
+            
+            var data = $("option:selected").map(function(){ return this.value }).get().join(",");
+            var data_edited = data.replace(/^,|,$/g,'');
+            
+            $('#media_sellers').val(data_edited);
+            
+            
+            var edit_url = "http://bwlistsmanager.appspot.com/lists/"+list_id+"/edit"
+            
+            $('#edit_list').attr('action', edit_url);
+            
+            $('#edit_list').submit();
+        });
+        
+              
+        $.get("http://bwlistsmanager.appspot.com/media_sellers", {}, function(data) {
+                
+
+                $.each(data.data, function(idx2,val2) {                    
+                     $("select.chosen-select-width").append( 
+                        $("<option></option>") 
+                            .text(val2)
+                            .val(val2)
+                    );
+                    
+                });
+
+			  },
+			  "json"
+		 );  
+         
+         
+         
+         setTimeout(function() { makechosen(); }, 1000);
+        function makechosen()
+	            {
+                $('.select-loading').hide();
+                $( "select.chosen-select-width" ).chosen({width: "95%"});
+                
+                $('.my-select-all').click(function(){
+                    
+                                       
+                    $('option').prop('selected', true);
+                    
+                    $('select.chosen-select-width option[value="YBRANT"]').attr("selected", false);
+                    $('select.chosen-select-width option[value="Viewster_Production"]').attr("selected", false);
+                    $('select.chosen-select-width option[value="MediaShakers"]').attr("selected", false);
+                    
+                    
+                    $('select').trigger('chosen:updated');
+                })
+                
+                $('.my-deselect-all').click(function(){
+                    $('option').prop('selected', false);
+                    $('select').trigger('chosen:updated');
+                })
+                
+                $('.e-sheep').click(function(){
+                    
+                    var esheep = 'unblocker,theuppercut,theoceansociety,thefutoncritic,Split,fashionone,comedygivesback,inmagazine,ES1';
+                    var match = esheep.split(',')
+                    makeselected(match);
+                
+                                                                                                
+	            });
+                checkUser();
+	            }
+                
+                
+        function makeselected(match)
+        {
+            
+            
+            
+            for (var a in match){
+                        var variable = match[a]
+                        
+                        
+                        $('select.chosen-select-width option[value="' + variable +'"]').attr("selected", true);
+                        
+                        $('select.chosen-select-width').trigger("chosen:updated");
+                    }
+            
+            
+            
+            
+        }
+        
+        
+
+     } );
+     
+
+     
+     function getQueryVariable(variable)
+    {
+           var query = window.location.search.substring(1);
+           var vars = query.split("&");
+           for (var i=0;i<vars.length;i++) {
+                   var pair = vars[i].split("=");
+                   if(pair[0] == variable){return pair[1];}
+           }
+           return(false);
+    }    
+     
+     
+     
+    function checkUser(){
+        
+        
+        var cur_access;
+     $.ajax({
+           url: 'http://bwlistsmanager.appspot.com/user_access',
+           type: 'GET',
+           dataType: "json",
+           crossDomain: true,
+           xhrFields: {
+                withCredentials: true
+            },
+           success: function(data) {
+               //$('#list_name').val(data.data.listName);
+               
+               cur_access = data.access
+               
+                if(cur_access == 1){
+                        
+                    $('.btn-submit').hide();
+                        
+                    }
+               
+               
+               
+           },
+           error: function() {
+            
+               //$('.bs-example-modal-sm').modal('show');
+           }
+     });
+
+    
+        
+        
+        
+    }     
+        
+     
+    </script>
+    
+    
+    <style>
+    body {  padding-top: 40px;  padding-bottom: 40px;  background-color: #eee;}
+
+    .btn-submit{float:right;}
+    .form-horizontal {max-width: 700px;padding: 15px;margin: 0 auto;}
+
+    h1,h2,h3{text-align:center;}
+    .modal-content{padding:10px;}
+    .my-select-all{margin-top:5px;}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+    
+    <!-- Alert login modal box -->
+    
+    <div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <h2>Something went wrong...</h2>
+          <h3>Please try again OR <a href="http://hbw.hiro.tv/">login</a></h3>
+        </div>
+      </div>
+    </div>
+    
+    <h1><a href="lists.html">HIRO - Black / White List Manager</a></h1>
+    
+    <h2>Edit List</h2>
+    <h3 id="list_title"></h3>
+    
+    <form class="form-horizontal" role="form" name="edit_list" id="edit_list" method="post">
+    
+    
+      
+      <div class="form-group">
+        <label for="list_name" class="col-sm-3 control-label">Name</label>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" id="list_name" name="list_name" />
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="col-sm-3 control-label">ID:</label>
+        <div class="col-sm-9">
+          <p class="form-control-static" id="list_id_num"></p>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Type</label>
+        <div class="col-sm-9">
+          <p class="form-control-static" id="list_type"></p>
+        </div>
+      </div>
+      
+      
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Media Sellers:</label>
+        <div class="col-sm-9"><p class="select-loading form-control-static">loading...</p>
+          <select data-placeholder="Select Media Sellers" multiple="" class="chosen-select-width" tabindex="-1" style="display: none;">
+            <option value=""></option>
+            
+          </select><button type="button" class="my-select-all">Select All</button><button type="button" class="my-deselect-all">Deselect All</button><button type="button" class="e-sheep">Electric Sheep</button>
+          <input type="hidden" name="media_sellers" id="media_sellers" value="" />
+            
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="list_comments" class="col-sm-3 control-label">Comments</label>
+        <div class="col-sm-9">
+          <textarea class="form-control" id="list_comments" name="list_comments"></textarea>
+        </div>
+      </div>
+      
+          
+     <div class="form-group">
+        <button type="submit" class="btn btn-primary btn-submit">Submit</button>
+      </div>
+    
+ 
+    
+    
+    
+    
+      
+    </form>
+    
+
+    </div> <!-- /container -->
+
+
+
+</body>
+</html>

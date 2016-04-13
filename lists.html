@@ -1,0 +1,624 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+	<title>HIRO - Black / White  List Manager</title>
+    
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" />
+    <link rel="shortcut icon" href="css/hirofavicon.ico" />                
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.css" />
+    
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    
+    <!-- Add fancyBox -->
+    <link rel="stylesheet" href="js/fancybox/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen" />
+    <script type="text/javascript" src="js/fancybox/jquery.fancybox.pack.js?v=2.1.5"></script>
+    
+    <script src="js/chosen.jquery.min.js"></script>
+    <link rel="stylesheet" href="css/chosen.min.css" />
+    
+    
+    
+    <script src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/9dcbecd42ad/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+    <script>
+    var cur_access;
+    $(document).ready(function() {
+        
+
+        $.ajax({
+            url: 'http://bwlistsmanager.appspot.com/user_access',
+            type: 'GET',
+            dataType: "json",
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function(data) {
+                //$('#list_name').val(data.data.listName);
+
+                cur_access = data.access
+
+
+
+
+            },
+            error: function() {
+
+                //$('.bs-example-modal-sm').modal('show');
+            }
+        });
+
+
+
+
+        var table = $('#lists').DataTable({
+
+            "scrollY": "620px",
+            "scrollCollapse": true,
+            "paging": true,
+            "jQueryUI": false,
+            "processing": true,
+            "bDestroy": true,            
+            "searching": true,
+            "sDom": 'f<t>lpi',
+
+            //"ajax": "http://bwlistsmanager.appspot.com/lists",     
+
+
+            "sAjaxSource": "http://bwlistsmanager.appspot.com/lists",
+            "fnServerData": function(sSource, aoData, fnCallback, oSettings) {
+                oSettings.jqXHR = $.ajax({
+                    "dataType": 'json',
+
+
+
+                    "type": "GET",
+                    "url": sSource,
+                    "data": aoData,
+                    "crossDomain": true,
+                    "xhrFields": {
+                        withCredentials: true
+                    },
+                    "success": fnCallback,
+                    "error": function(e) {
+                        $('.bs-example-modal-sm').modal('show');
+                    }
+                });
+            },
+
+
+
+            "fnDrawCallback": function(oSettings) {
+
+                if (cur_access == 1) {
+
+                    $('.btn-delete').hide();
+                    $('.add-new').hide();
+
+
+                }
+            },
+
+
+
+
+            "columns": [{
+                    "data": "id"
+                }, {
+                    "data": "listName"
+                }, {
+                    "data": "listType"
+                }, {
+                    "targets": 3,
+                    "data": null,
+                    "defaultContent": "<button type='button' class='btn btn-primary btn-xs btn-view'><span class='glyphicon glyphicon-share' aria-hidden='true'></span> VIEW / EDIT</button>"
+                }, {
+                    "targets": 4,
+                    "data": null,
+                    "defaultContent": "<button type='button' class='btn btn-primary btn-xs btn-edit'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span> VIEW / EDIT</button>"
+                }, {
+                    "targets": 5,
+                    "data": null,
+                    "defaultContent": "<button type='button' class='btn btn-danger btn-xs btn-delete'><span class='glyphicon glyphicon-remove-circle' aria-hidden='true'></span> DELETE</button>"
+                }
+
+            ],
+            "columnDefs": [{
+                "orderable": false,
+                "targets": 3
+            }, {
+                "orderable": false,
+                "targets": 4
+            }, {
+                "orderable": false,
+                "targets": 5
+            }],
+
+            initComplete: function() {
+                var api = this.api();
+
+
+                
+                
+            
+                api.columns(2).indexes().flatten().each(function(i) {
+                    var column = api.column(i);
+                    var select = $('<select class="form-control input-sm" id="all_options"><option value="">All</option></select>')
+
+                    .insertBefore($('#lists_filter'))
+                        .on('change', function() {
+                            var val = $.fn.dataTable.util.escapeRegex(
+                                $(this).val()
+                            );
+
+                            column
+                                .search(val ? '^' + val + '$' : '', true, false)
+                                .draw();
+                        });
+
+                    column.data().unique().sort().each(function(d, j) {
+                        select.append('<option value="' + d + '">' + d + '</option>')
+                    });
+                });
+            }
+
+        });
+
+               
+        $('#lists tbody').on('click', '.btn-view', function() {
+        
+            var data = table.row( $(this).parents('tr') ).data();
+            //console.log( data["id"]);
+
+            //alert( data[0] +"'s salary is: "+ data[ 5 ] );
+            
+            document.location.href = 'domains.html?list_id=' + data["id"];
+
+        });
+
+        $('#lists tbody').on('click', '.btn-edit', function() {
+            var data = table.row($(this).parents('tr')).data();
+            //alert( data[0] +"'s salary is: "+ data[ 5 ] );
+            document.location.href = 'edit_list.html?list_id=' + data["id"];
+
+        });
+
+
+
+
+        $('#lists tbody').on('click', '.btn-delete', function() {
+            var result = window.confirm('Are you sure?');
+            if (result == false) {
+                e.preventDefault();
+            } else {
+
+                var data = table.row($(this).parents('tr')).data();
+
+
+                $.ajax({
+                    url: 'http://bwlistsmanager.appspot.com/lists/' + data["id"] + '/delete',
+                    type: 'POST',
+                    data: {
+                        'action': 'delete'
+                    },
+                    headers: {
+                        'Content-Type': undefined,
+                    },
+                    crossDomain: true,
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    success: function() {
+                        // if it worked, ask datatable to redraw the table with the new data
+                        //$("#lists").dataTable().fnDraw();
+                        table.ajax.reload();
+
+                        $('.alert-success-delete').fadeIn();
+                        setTimeout(function() {
+                            $(".alert-success-delete").hide('blind', {}, 500)
+                        }, 5000);
+                        // if this js function does anything useful (like deleting the row), then call it:
+
+                    },
+                    error: function() {
+
+                        $('.bs-example-modal-sm').modal('show');
+                    }
+                });
+
+
+            };
+
+        });
+
+
+        $("#lists_wrapper").prepend("<button type='button' class='btn btn-primary add-new' id='new_list'>Add New List</button>");
+        $("<a class='advanced'  href='#inline'  ><button class='btn btn-primary'>Advanced</button></a>").insertAfter("#lists_filter input");
+
+
+
+        $('.add-new').click(function() {
+
+            //alert( data[0] +"'s salary is: "+ data[ 5 ] );
+            document.location.href = 'new_list.html';
+
+        });
+
+
+
+
+        $.get("http://bwlistsmanager.appspot.com/media_sellers", {}, function(ms_data) {
+
+
+
+                $.each(ms_data.data, function(idx2, val2) {
+                    $("select.chosen-select-width").append( // Append an object to the inside of the select box
+                        $("<option></option>") // Yes you can do this.
+                        .text(val2)
+                        .val(val2)
+
+
+                    );
+                });
+
+            },
+            "json"
+        );
+
+
+
+        setTimeout(function() {
+            makechosen();
+        }, 1000);
+
+        function makechosen() {
+            $('.select-loading').hide();
+            $("select.chosen-select-width").chosen({
+                width: "95%"
+            });
+            
+           
+            $('.my-select-all').click(function() {
+
+
+
+
+                $('option').prop('selected', true);
+
+
+                $('select.chosen-select-width option[value="YBRANT"]').attr("selected", false);
+                $('select.chosen-select-width option[value="Viewster_Production"]').attr("selected", false);
+                $('select.chosen-select-width option[value="MediaShakers"]').attr("selected", false);
+
+
+                $('select').trigger('chosen:updated');
+            })
+            $('.my-deselect-all').click(function() {
+                $('option').prop('selected', false);
+                $('select').trigger('chosen:updated');
+            })
+            $('.e-sheep').click(function() {
+
+                var esheep = 'unblocker,theuppercut,theoceansociety,thefutoncritic,Split,fashionone,comedygivesback,inmagazine,ES1';
+                //var esheep = '61,873,904,53,51,908,910,905';
+                var match = esheep.split(',')
+                makeselected(match);
+
+
+            });
+            
+            
+            
+            
+        }
+
+
+
+        if (getQueryVariable("success") == 'true') {
+
+            $('.alert-success-save').fadeIn();
+            setTimeout(function() {
+                $(".alert-success-save").hide('blind', {}, 500)
+            }, 5000);
+        }
+
+        if (getQueryVariable("error") == 'true') {
+
+            $('.alert-danger').fadeIn();
+        }
+
+
+
+
+        $(".advanced").fancybox({
+            maxWidth: 500,
+            maxHeight: 650,
+            fitToView: false,
+            width: '70%',
+            height: '70%',
+            autoSize: false,
+            closeClick: false,
+            openEffect: 'none',
+            closeEffect: 'none'
+        });
+        
+        
+         
+        
+
+        $('#adv_search').submit(function(event) {
+            event.preventDefault();
+
+            
+            $.fancybox.close();
+
+            $('#lists').dataTable().fnClearTable(); 
+            
+                        
+            var ms_data = $("option:selected").map(function() {
+                return this.value
+            }).get().join(",");
+            
+            var data_edited = ms_data.replace(/^,|,$/g,'');
+            
+            var reg_data = $(".chosen-select-width").val();
+            var str_data = reg_data.join();
+            
+            console.log(str_data);
+            
+            $.ajax({
+                   url: 'http://bwlistsmanager.appspot.com/lists/search-domain',
+                   type: 'POST',
+                   data: {'domain':  $('#domain').val(),'mediaSellers' : str_data,'listType': $('input[name=list_type]:checked', '#adv_search').val()},
+                   headers : {'Content-Type':undefined,},
+                   dataType: "json",
+                   crossDomain: true,
+                    xhrFields: {
+                      withCredentials: true
+                   },
+                   success: function(data) {
+                      
+                        jsonObj = [];
+
+                        $.each(data.data, function(a,b) {                    
+                             
+                            item = {}
+                            item ["id"] = b.id;
+                            item ["listName"] = b.listName;
+                            item ["listType"] = b.listType;
+                    
+                            jsonObj.push(item); 
+                             
+                            
+                            
+                        });
+                        jsonString = JSON.stringify(jsonObj);
+                       
+                        if(!jQuery.isEmptyObject(jsonObj)){
+                        $('#lists').dataTable().fnAddData(jsonObj);
+                        }
+                       
+                   },
+                   error: function() {
+                    
+                   }
+                });           
+          
+          $('#domain').val('');
+          
+            $('option').prop('selected', false);
+            $('select').trigger('chosen:updated');
+        });
+
+    });
+
+
+    function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] == variable) {
+                return pair[1];
+            }
+        }
+        return (false);
+    }
+
+
+    function makeselected(match) {
+
+
+
+        for (var a in match) {
+            var variable = match[a]
+
+
+            $('select.chosen-select-width option[value="' + variable + '"]').attr("selected", true);
+
+            $('select.chosen-select-width').trigger("chosen:updated");
+        }
+
+
+
+
+    }
+</script>
+    
+    <style>
+    body {padding-top: 40px; padding-bottom: 40px; background-color: #eee;}
+    
+    #lists_length label {float: left;}
+    #lists_length p {float: left;margin-left: 60px;position: relative;top: 4px;}
+    .dataTables_wrapper .dataTables_length{margin-top:30px;}
+    #new_list{margin-right:50px;}
+    .advanced{margin-left:10px;}
+    #advanced a{color:white;}
+    #advanced a:hover{text-decoration:none;}
+    .search-field .default{width: auto!important;}
+    .btn{padding: 4px 8px;font-size: 12px;}
+    
+    
+    .btn-xs, .btn-group-xs>.btn {padding: 1px 5px;font-size: 12px;line-height: 1.5;border-radius: 3px;}
+    
+    h1{text-align:center;}
+    #search_bt{float:right;}
+    .alert{display:none;}
+    .modal-content{padding:10px;}
+    
+    .form-horizontal .form-group {    margin-right: 0;    margin-left: 0;}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+    
+    
+    <div class="alert alert-success alert-success-save alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      List saved successfully
+    </div>
+    
+    <div class="alert alert-success alert-success-delete alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      List deleted successfully
+    </div>
+    
+    <div class="alert alert-danger alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      Something went wrong... <a href="" class="alert-link" onclick="window.history.back();return false;">Please try again</a>
+    </div>
+    
+    
+    <!-- Alert login modal box -->
+    
+    <div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <h2>Something went wrong...</h2>
+          <h3>Please try again OR <a href="http://hbw.hiro.tv/">login</a></h3>
+        </div>
+      </div>
+    </div>
+    
+    <h1><a href="lists.html">HIRO - Black / White List Manager</a></h1>
+
+
+
+
+<table id="lists" class="table table-striped table-bordered table-hover" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Domains</th>
+                <th>Details</th>
+                <th>Delete List</th>
+            </tr>
+        </thead>
+ 
+        <tfoot>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Domains</th>
+                <th>Details</th>
+                <th>Delete List</th>
+            </tr>
+        </tfoot>
+ 
+        <tbody>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                
+            </tr>
+            
+        </tbody>
+    </table>
+
+    </div> <!-- /container -->
+
+
+<!-- advanced search -->
+
+
+    <div id="inline" style="display:none;width:500px;">
+	<h2>Advanced Search</h2>
+    
+    <form class="form-horizontal" role="form" action="" id="adv_search" name="adv_search" method="post" enctype="multipart/form-data">
+    
+    
+      
+      <div class="form-group">
+        <label for="domain" class="col-sm-3 control-label">Domain</label>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" id="domain" name="domain"  required="" placeholder="eg: cnn.com" />
+        </div>
+      </div>
+      
+      
+      
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Type:</label>
+        <div class="col-sm-9">
+            <label class="radio-inline">
+              <input type="radio" name="list_type" id="ListTypeAll" value="All" required="" checked="true"/> All
+            </label>
+          <label class="radio-inline">
+              <input type="radio" name="list_type" id="ListTypeBlack" value="Black" required="" /> Black
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="list_type" id="ListTypeWhite" value="White" required=""  /> White
+            </label>
+            
+        </div>
+      </div>
+      
+      
+      
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Media Sellers:</label>
+        <div class="col-sm-9"><p class="select-loading form-control-static">loading...</p>
+          <select data-placeholder="Select Media Sellers" multiple="" class="chosen-select-width" tabindex="-1" style="display: none;" >
+
+          </select><button type="button" class="my-select-all">Select All</button><button type="button" class="my-deselect-all">Deselect All</button><button type="button" class="e-sheep">Electric Sheep</button>
+          <input type="hidden" name="media_sellers" id="media_sellers" value="" required/>  
+          <br /><small>* Media Sellers fiels is required</small>
+        </div>
+      </div>
+      
+   
+      
+    
+     <div class="form-group">
+        <button id="search_bt" class="btn btn-primary btn-submit">Search</button>
+      </div>
+    
+    
+    
+      
+    </form>
+    
+    
+    </div>
+
+
+
+</body>
+</html>
